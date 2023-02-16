@@ -37,6 +37,13 @@ biom20=read_excel("Data/Biometricsx 2020.xlsx") %>%
 
 Create Hypertension Dataset:
 ```{r}
+biomed=
+  rbind(biom19,biom20)
+```
 
+```{r}
+ht=
+  biomed %>% 
+  filter(bps > 130)
 ```
 
