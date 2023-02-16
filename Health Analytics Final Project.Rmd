@@ -4,6 +4,39 @@ author: "R2"
 date: "2023-02-16"
 output: html_document
 ---
-hello
 
-another hello
+```{r}
+library(readxl)
+library(tidyverse)
+library(dplyr)
+library(tidyselect)
+library(lubridate)
+library(ggplot2)
+```
+
+Load Data Sets:
+```{r}
+med19= read_excel("Data/Medical 2019.xlsx") %>% 
+  janitor:: clean_names()
+med20= read_excel("Data/Medical 2020.xlsx") %>% 
+  janitor:: clean_names()
+rx20= read_excel("Data/Rx 2020.xlsx") %>% 
+  janitor:: clean_names()
+rx19= read_excel("Data/Rx 2019.xlsx") %>% 
+  janitor:: clean_names()
+risk20= read_excel("Data/Risk 2020.xlsx") %>% 
+  janitor:: clean_names()
+risk19=read_excel("Data/Risk 2019.xlsx") %>% 
+  janitor:: clean_names()
+biom19=read_excel("Data/Biometrics 2019.xlsx") %>% 
+  janitor:: clean_names()
+biom20=read_excel("Data/Biometricsx 2020.xlsx") %>% 
+  janitor:: clean_names()
+```
+
+
+Create Hypertension Dataset:
+```{r}
+
+```
+
