@@ -44,6 +44,86 @@ biomed=
 ```{r}
 ht=
   biomed %>% 
-  filter(bps > 130)
+  mutate(
+    bps_num= as.numeric(bps)) %>% 
+  filter(bps_num >= 130)
+
+summary(ht$bps_num)
+```
+
+Making Groups:
+```{r}
+rx_ht_19=
+  merge(ht,rx19, by = "person")
+rx_ht=
+  merge(rx_ht_19, rx20, by= "person")
+```
+
+```{r}
+rx_ht_drug=
+  rx_ht %>% 
+  filter
+```
+
+
+Other Attempt
+```{r}
+biom_19_ht=
+  biom19 %>% 
+  mutate(
+    bps_num= as.numeric(bps)) %>% 
+  filter(bps_num >= 130)
+
+ht_19=
+  merge(biom_19_ht, rx19, by= "person")
+```
+
+Filter to drug classes
+```{r}
+ht_19_class=
+  ht_19 %>% 
+  filter(class %in% c("ANTIHYPERTENSIVES", "CALCIUM CHANNEL BLOCKERS", "CARDIOVASCULAR AGENTS - MISC.", "BETA BLOCKERS"))
+
+counting_checker=
+  ht_19 %>% 
+  count(class)
+
+counting_check=
+  ht_19_class %>% 
+  count(class)
+```
+
+*CHECK HAS RETURNED CORRECT*
+
+```{r}
+ht_19_group=
+  ht_19 %>% 
+  ifelse (class %in% c("ANTIHYPERTENSIVES", "CALCIUM CHANNEL BLOCKERS", "CARDIOVASCULAR AGENTS - MISC.", "BETA BLOCKERS"))
+  {print ("Y")
+   groups = c(groups, "Y")}
+
+ht_19_group=
+  ht_19 %>% 
+  if_else (class == "ANTIHYPERTENSIVES")
+  {print ("Y")
+   groups = c(groups, "Y")}
+
+within(ht_19, ht_19$class <- )
+```
+
+```{r}
+ht_19_group=
+  ht_19 %>% 
+  mutate(ht_19, group= ifelse(class == "ANTIHYPERTENSIVES", 'Y', 'N'))
+
+ht_19_test=
+  ht_19 %>% 
+  mutate(ht_19, group= case_when(class =="ANTIHYPERTENSIVES"~ 'Y',
+                                 class== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
+                                 class== "BETA BLOCKERS" ~"Y",
+                                 class== "CARDIOVASCULAR AGENTS - MISC." ~ "Y"))
+ht_19_test2=
+  ht_19_test %>% 
+  mutate(group_new= if_else(group== "NA", "N", "Y"))
 ```
 
