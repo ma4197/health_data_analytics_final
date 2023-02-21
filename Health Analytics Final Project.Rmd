@@ -183,3 +183,68 @@ ht_person_counter_test=
   count(person)
 ```
 
+*TRYING rbing with filling for missing*
+```{r}
+ht_trials=
+  rbind.fill(ht,ht_19_test,ht_20_test)
+```
+
+
+```{r}
+ht_19_binds=
+rbind.fill(ht,biom_19_ht,rx19)
+
+```
+
+```{r}
+rx_ht_19=
+  inner_join(ht,rx19, by = "person")
+rx_ht=
+  full_join(rx_ht_19, rx20, by= "person")
+count=
+  rx_ht_19 %>% 
+  count(person)
+count_ht=
+  ht %>% 
+  count(person)
+
+count_know=
+  anti_join(count_ht,count, by= "person")
+```
+
+```{r}
+rx_ht_filter=
+  rx_ht %>% 
+  mutate(rx_ht, group_19= case_when(class.x =="ANTIHYPERTENSIVES"~ 'Y',
+                                 class.x== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
+                                 class.x== "BETA BLOCKERS" ~"Y",
+                                 class.x== "CARDIOVASCULAR AGENTS - MISC." ~ "Y",
+                                 TRUE ~ "N" ))
+
+rx_ht_filter_tog=
+  mutate(rx_ht_filter, group_20= case_when(class.y =="ANTIHYPERTENSIVES"~ 'Y',
+                                 class.y== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
+                                 class.y== "BETA BLOCKERS" ~"Y",
+                                 class.y== "CARDIOVASCULAR AGENTS - MISC." ~ "Y",
+                                 TRUE ~ "N" ))
+rx_groups=
+  rx_ht_filter_tog %>% 
+  distinct(person, bps,age_range.x, bdate.x, from.x, class.x, drug.x, cost.x, bdate.y,from.y, class.y, drug.y, cost.y, group_19, group_20 )
+
+```
+
+```{r}
+rx_group_trial=
+  mutate(rx_groups, group= case_when(group_19== "Y" & group_20== "Y" ~ 'Consistent',
+                                     group_19== "N" & group_20=="Y" ~ 'Started',
+                                     group_19=="N" & group_20=="N" ~ "Never",
+                                     group_19=="Y" & group_20=="N"~ "Stopped"))
+rx_group_counter=
+  rx_group_trial %>% 
+  group_by(person) %>% 
+  count(group)
+
+rx_merge=
+  left_join(count_ht,rx_group_counter,by= 'person')
+```
+
