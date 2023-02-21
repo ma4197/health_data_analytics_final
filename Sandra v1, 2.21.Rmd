@@ -48,12 +48,12 @@ biom20 = biom20 %>% drop_na(bps)
 #Create hypertensive + drug dataset 
 htdrug19 = merge(rx19, biom19, by = "person")
 htdrug20 = merge(rx20, biom20, by = "person")
-
-htdrug = rbind(htdrug19, htdrug20)
+htdrugbiom19 = merge(htdrug19, biom19, by = "person")
+htdrugbiom20 = merge(htdrug20, biom20, by = "person")
+htdrug = rbind(htdrugbiom19, htdrugbiom20)
 #Create filter for hypertensive people 
-
 htdrug = htdrug %>% 
-  filter(htdrug$bps > 130) 
+  filter(htdrug$bps.x >= 130) 
 
 #Create groups of hypertensives where 1 = already taking in 2019, 2 = did not take in 2019 but took in 2020, 3=did not take both years
 
@@ -88,7 +88,7 @@ htdrugsuccess = htdrugset %>%
   distinct(personid, htgroup) %>% 
   group_by(htgroup) %>% 
   summarize(n())
-
-
 ```
+
+
 
