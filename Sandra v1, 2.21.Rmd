@@ -1,0 +1,94 @@
+---
+title: "Health Data Final Project"
+author: "R2"
+date: "2023-02-16"
+output: html_document
+---
+
+```{r}
+library(readxl)
+library(tidyverse)
+library(dplyr)
+library(tidyselect)
+library(lubridate)
+library(ggplot2)
+```
+
+Load Data Sets:
+```{r}
+med19= read_excel("Data/Medical 2019.xlsx") %>% 
+  janitor:: clean_names()
+med20= read_excel("Data/Medical 2020.xlsx") %>% 
+  janitor:: clean_names()
+rx20= read_excel("Data/Rx 2020.xlsx") %>% 
+  janitor:: clean_names()
+rx19= read_excel("Data/Rx 2019.xlsx") %>% 
+  janitor:: clean_names()
+risk20= read_excel("Data/Risk 2020.xlsx") %>% 
+  janitor:: clean_names()
+risk19=read_excel("Data/Risk 2019.xlsx") %>% 
+  janitor:: clean_names()
+biom19=read_excel("Data/Biometrics 2019.xlsx") %>% 
+  janitor:: clean_names()
+biom20=read_excel("Data/Biometricsx 2020.xlsx") %>% 
+  janitor:: clean_names()
+```
+
+Create hypertensive Dataset: 
+```{r}
+htdrug = rbind(rx19, rx20) 
+```
+
+
+```{r}
+#remove NA rows if data is missing bps values
+biom19 = biom19 %>% drop_na(bps)
+biom20 = biom20 %>% drop_na(bps)
+
+#Create hypertensive + drug dataset 
+htdrug19 = merge(rx19, biom19, by = "person")
+htdrug20 = merge(rx20, biom20, by = "person")
+
+htdrug = rbind(htdrug19, htdrug20)
+#Create filter for hypertensive people 
+
+htdrug = htdrug %>% 
+  filter(htdrug$bps > 130) 
+
+#Create groups of hypertensives where 1 = already taking in 2019, 2 = did not take in 2019 but took in 2020, 3=did not take both years
+
+htdrugset <- htdrug %>% group_by(person) %>% mutate(personid = cur_group_id()) #this creates a numbered list of each person for easier counting 
+
+howmanyhypertensives <- htdrugset %>% 
+  group_by(personid) %>% 
+  summarize(n())
+
+#create column for people on hypertensives 
+htdrugset$htgroup <- 0
+htdrugset$htuse <- 0 
+
+#edit values to indicatte people that use hypertensive medication
+htdrugset = htdrugset %>% 
+  group_by(personid) %>% 
+  mutate(htuse = case_when(
+    (any(class == "CALCIUM CHANNEL BLOCKERS" | class == "CARDIOVASCULAR AGENTS - MISC." | class == "ANTIHYPERTENSIVES" | class == "BETA BLOCKERS")) ~ "yes", 
+  TRUE ~ "no")
+  )
+
+#create distribution for those 
+htdrugset = htdrugset %>% 
+  group_by(personid) %>% 
+  mutate(htgroup = case_when(
+    htuse == "yes" & grepl("2019", from) ~ "1",
+    htuse == "yes" & grepl("2020", from) ~ "2",
+    TRUE ~ "3"
+  ))
+
+htdrugsuccess = htdrugset %>% 
+  distinct(personid, htgroup) %>% 
+  group_by(htgroup) %>% 
+  summarize(n())
+
+
+```
+
