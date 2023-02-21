@@ -118,12 +118,68 @@ ht_19_group=
 
 ht_19_test=
   ht_19 %>% 
-  mutate(ht_19, group= case_when(class =="ANTIHYPERTENSIVES"~ 'Y',
+  mutate(ht_19, group_19= case_when(class =="ANTIHYPERTENSIVES"~ 'Y',
                                  class== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
                                  class== "BETA BLOCKERS" ~"Y",
-                                 class== "CARDIOVASCULAR AGENTS - MISC." ~ "Y"))
-ht_19_test2=
+                                 class== "CARDIOVASCULAR AGENTS - MISC." ~ "Y",
+                                 TRUE ~ "N" ))
+ht_count=
   ht_19_test %>% 
-  mutate(group_new= if_else(group== "NA", "N", "Y"))
+  count(group)
+
+ht_person_19=
+  ht_19_test %>% 
+  count(person)
+```
+
+2020 Group Order
+```{r}
+biom_20_ht=
+  biom20 %>% 
+  mutate(
+    bps_num= as.numeric(bps)) %>% 
+  filter(bps_num >= 130)
+
+ht_20=
+  merge(biom_20_ht, rx20, by= "person")
+
+ht_20_test=
+  ht_20 %>% 
+  mutate(ht_20, group_20= case_when(class =="ANTIHYPERTENSIVES"~ 'Y',
+                                 class== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
+                                 class== "BETA BLOCKERS" ~"Y",
+                                 class== "CARDIOVASCULAR AGENTS - MISC." ~ "Y",
+                                 TRUE ~ "N" ))
+
+ht_person_20 =
+  ht_20_test %>% 
+  count(person)
+```
+
+```{r}
+ht_person=
+  ht %>% 
+  count(person)
+```
+
+```{r}
+ht_new_test=
+  merge(ht_19, ht_20, by= "person")
+
+ht_new_test_counter=
+  ht_new_test %>% 
+  mutate(ht_new_test, grouping= case_when(class.x =="ANTIHYPERTENSIVES"~ 'Y',
+                                 class.x== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
+                                 class.x== "BETA BLOCKERS" ~"Y",
+                                 class.x== "CARDIOVASCULAR AGENTS - MISC." ~ "Y",
+                                 TRUE ~ "N" ))
+
+ht_new_test_counter_1=
+  ht_new_test_counter %>% 
+  filter(grouping == "Y")
+
+ht_person_counter_test=
+  ht_new_test_counter_1 %>% 
+  count(person)
 ```
 
