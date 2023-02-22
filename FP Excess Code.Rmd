@@ -1,0 +1,328 @@
+---
+title: "Final Project Excess Code"
+author: "Mayuri Albal"
+date: "2023-02-22"
+output: html_document
+---
+
+```{r}
+library(readxl)
+library(tidyverse)
+library(dplyr)
+library(tidyselect)
+library(lubridate)
+library(ggplot2)
+```
+
+Load Data Sets:
+```{r}
+med19= read_excel("Data/Medical 2019.xlsx") %>% 
+  janitor:: clean_names()
+med20= read_excel("Data/Medical 2020.xlsx") %>% 
+  janitor:: clean_names()
+rx20= read_excel("Data/Rx 2020.xlsx") %>% 
+  janitor:: clean_names()
+rx19= read_excel("Data/Rx 2019.xlsx") %>% 
+  janitor:: clean_names()
+risk20= read_excel("Data/Risk 2020.xlsx") %>% 
+  janitor:: clean_names()
+risk19=read_excel("Data/Risk 2019.xlsx") %>% 
+  janitor:: clean_names()
+biom19=read_excel("Data/Biometrics 2019.xlsx") %>% 
+  janitor:: clean_names()
+biom20=read_excel("Data/Biometricsx 2020.xlsx") %>% 
+  janitor:: clean_names()
+```
+
+
+Create Hypertension Dataset:
+```{r}
+biomed=
+  rbind(biom19,biom20)
+```
+
+```{r}
+ht=
+  biomed %>% 
+  mutate(
+    bps_num= as.numeric(bps)) %>% 
+  filter(bps_num >= 130)
+
+summary(ht$bps_num)
+```
+
+Making Groups:
+```{r}
+rx_ht_19=
+  merge(ht,rx19, by = "person")
+rx_ht=
+  merge(rx_ht_19, rx20, by= "person")
+```
+
+```{r}
+rx_ht_drug=
+  rx_ht %>% 
+  filter
+```
+
+
+Other Attempt
+```{r}
+biom_19_ht=
+  biom19 %>% 
+  mutate(
+    bps_num= as.numeric(bps)) %>% 
+  filter(bps_num >= 130)
+
+ht_19=
+  merge(biom_19_ht, rx19, by= "person")
+```
+
+Filter to drug classes
+```{r}
+ht_19_class=
+  ht_19 %>% 
+  filter(class %in% c("ANTIHYPERTENSIVES", "CALCIUM CHANNEL BLOCKERS", "CARDIOVASCULAR AGENTS - MISC.", "BETA BLOCKERS"))
+
+counting_checker=
+  ht_19 %>% 
+  count(class)
+
+counting_check=
+  ht_19_class %>% 
+  count(class)
+```
+
+*CHECK HAS RETURNED CORRECT*
+
+```{r}
+ht_19_group=
+  ht_19 %>% 
+  ifelse (class %in% c("ANTIHYPERTENSIVES", "CALCIUM CHANNEL BLOCKERS", "CARDIOVASCULAR AGENTS - MISC.", "BETA BLOCKERS"))
+  {print ("Y")
+   groups = c(groups, "Y")}
+
+ht_19_group=
+  ht_19 %>% 
+  if_else (class == "ANTIHYPERTENSIVES")
+  {print ("Y")
+   groups = c(groups, "Y")}
+
+within(ht_19, ht_19$class <- )
+```
+
+```{r}
+ht_19_group=
+  ht_19 %>% 
+  mutate(ht_19, group= ifelse(class == "ANTIHYPERTENSIVES", 'Y', 'N'))
+
+ht_19_test=
+  ht_19 %>% 
+  mutate(ht_19, group_19= case_when(class =="ANTIHYPERTENSIVES"~ 'Y',
+                                 class== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
+                                 class== "BETA BLOCKERS" ~"Y",
+                                 class== "CARDIOVASCULAR AGENTS - MISC." ~ "Y",
+                                 TRUE ~ "N" ))
+ht_count=
+  ht_19_test %>% 
+  count(group)
+
+ht_person_19=
+  ht_19_test %>% 
+  count(person)
+```
+
+2020 Group Order
+```{r}
+biom_20_ht=
+  biom20 %>% 
+  mutate(
+    bps_num= as.numeric(bps)) %>% 
+  filter(bps_num >= 130)
+
+ht_20=
+  merge(biom_20_ht, rx20, by= "person")
+
+ht_20_test=
+  ht_20 %>% 
+  mutate(ht_20, group_20= case_when(class =="ANTIHYPERTENSIVES"~ 'Y',
+                                 class== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
+                                 class== "BETA BLOCKERS" ~"Y",
+                                 class== "CARDIOVASCULAR AGENTS - MISC." ~ "Y",
+                                 TRUE ~ "N" ))
+
+ht_person_20 =
+  ht_20_test %>% 
+  count(person)
+```
+
+```{r}
+ht_person=
+  ht %>% 
+  count(person)
+```
+
+```{r}
+ht_new_test=
+  merge(ht_19, ht_20, by= "person")
+
+ht_new_test_counter=
+  ht_new_test %>% 
+  mutate(ht_new_test, grouping= case_when(class.x =="ANTIHYPERTENSIVES"~ 'Y',
+                                 class.x== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
+                                 class.x== "BETA BLOCKERS" ~"Y",
+                                 class.x== "CARDIOVASCULAR AGENTS - MISC." ~ "Y",
+                                 TRUE ~ "N" ))
+
+ht_new_test_counter_1=
+  ht_new_test_counter %>% 
+  filter(grouping == "Y")
+
+ht_person_counter_test=
+  ht_new_test_counter_1 %>% 
+  count(person)
+```
+
+*TRYING rbing with filling for missing*
+```{r}
+ht_trials=
+  rbind.fill(ht,ht_19_test,ht_20_test)
+```
+
+
+```{r}
+ht_19_binds=
+rbind.fill(ht,biom_19_ht,rx19)
+
+```
+
+```{r}
+rx_ht_19=
+  inner_join(ht,rx19, by = "person")
+rx_ht=
+  full_join(rx_ht_19, rx20, by= "person")
+count=
+  rx_ht_19 %>% 
+  count(person)
+count_ht=
+  ht %>% 
+  count(person)
+
+count_know=
+  anti_join(count_ht,count, by= "person")
+```
+
+```{r}
+rx_ht_filter=
+  rx_ht %>% 
+  mutate(rx_ht, group_19= case_when(class.x =="ANTIHYPERTENSIVES"~ 'Y',
+                                 class.x== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
+                                 class.x== "BETA BLOCKERS" ~"Y",
+                                 class.x== "CARDIOVASCULAR AGENTS - MISC." ~ "Y",
+                                 TRUE ~ "N" ))
+
+rx_ht_filter_tog=
+  mutate(rx_ht_filter, group_20= case_when(class.y =="ANTIHYPERTENSIVES"~ 'Y',
+                                 class.y== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
+                                 class.y== "BETA BLOCKERS" ~"Y",
+                                 class.y== "CARDIOVASCULAR AGENTS - MISC." ~ "Y",
+                                 TRUE ~ "N" ))
+rx_groups=
+  rx_ht_filter_tog %>% 
+  distinct(person, bps,age_range.x, bdate.x, from.x, class.x, drug.x, cost.x, bdate.y,from.y, class.y, drug.y, cost.y, group_19, group_20 )
+
+```
+
+```{r}
+rx_group_trial=
+  mutate(rx_groups, group= case_when(group_19== "Y" & group_20== "Y" ~ 'Consistent',
+                                     group_19== "N" & group_20=="Y" ~ 'Started',
+                                     group_19=="N" & group_20=="N" ~ "Never",
+                                     group_19=="Y" & group_20=="N"~ "Stopped"))
+rx_group_counter=
+  rx_group_trial %>% 
+  group_by(person) %>% 
+  count(group)
+
+opp_rx_group_counter=
+  rx_group_trial %>% 
+  group_by(group) %>% 
+  count(person)
+
+rx_merge=
+  left_join(count_ht,rx_group_counter,by= 'person')
+
+rx_group_clean=
+  rx_group_trial %>% 
+  group_by(person) %>% 
+  filter(class.xclass.y %in% c("ANTIHYPERTENSIVES", "CALCIUM CHANNEL BLOCKERS", "BETA BLOCKERS", "CARDIOVASCULAR AGENTS - MISC.")) %>% 
+  count(group)
+```
+
+30 stayed consistent with drug use from 2019-2020
+
+
+*Filtering BP after Merge*
+
+```{r}
+rxht_19= 
+  merge(rx19,biom19, by = 'person')
+rxht_20=
+  merge(rx20,biom20, by= "person")
+
+rxht=
+  rbind(rxht_19,rxht_20)
+
+rxhtclean =
+  rxht %>% 
+  filter(bps >= 130)
+
+```
+
+```{r}
+rxhtdrug=
+  mutate(rxhtclean, group= case_when(class =="ANTIHYPERTENSIVES"~ 'Y',
+                                 class== "CALCIUM CHANNEL BLOCKERS" ~ "Y",
+                                 class== "BETA BLOCKERS" ~"Y",
+                                 class== "CARDIOVASCULAR AGENTS - MISC." ~ "Y",
+                                 TRUE ~ "N" ))
+rxht_fromsep=
+  rxhtdrug %>% 
+  separate(from, c("year", "month", "day"), sep = "-")
+
+rxht_from=
+  rxht_fromsep %>% 
+  group_by(person,year) %>% 
+  count(group)
+```
+
+```{r}
+rxht_top=
+mutate(rxht_fromsep, group= case_when(group== "Y" & year== "2019" ~ '1',
+                                     group== "N" & year=="2020" ~ '2',
+                                     group=="N" & year=="2019" ~ "0",
+                                     group_19=="Y" & group_20=="N"~ "Stopped"))
+```
+
+
+```{r}
+biometric=
+  inner_join(biom19,biom20, by="person")
+biometric_bps=
+biometric %>% 
+  distinct(person, bps.x,bps.y) %>% 
+  select(person, bps.x, bps.y)
+```
+
+```{r}
+biometric_bps_num=
+  biometric_bps %>% 
+  mutate(bps_19= as.numeric(bps.x),
+         bps_20= as.numeric(bps.y))
+
+biometric_bps_change=
+  biometric_bps_num %>% 
+  mutate(biometric_bps_num, bps_change= case_when(bps_19 < bps_20 ~ 'Higher',
+                                     bps_19 > bps_20 ~ 'Lower',
+                                     bps_19==bps_20 ~ 'No Change'))
+```
