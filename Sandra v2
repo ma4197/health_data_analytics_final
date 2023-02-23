@@ -118,7 +118,8 @@ biom = biom %>% drop_na(bps) %>% rename(bps20 = bps)
 #hypertensive filter
 ht = biom %>% filter(bps19 >= 130)
 
-htdrug = merge(druguse, ht, by = "person")
+htdrug = merge(x = ht, y= druguse, by = "person", all.x=TRUE)
+htdrug[is.na(htdrug)] = "never started"
 htdrug = htdrug %>%
   distinct()
 
