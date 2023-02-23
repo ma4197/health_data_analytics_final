@@ -156,6 +156,77 @@ biometric_bps_change=
 bps_change=
   biometric_bps_change %>% 
   select(person, bps_19, bps_20, bps_change)
+
+bps_counter=
+  bps_change %>% 
+  count(bps_change)
 ```
 
+*START HERE*
+Merge Attempt
+
+```{r}
+biom19 = biom19 %>% drop_na(bps)
+biom20 = biom20 %>% drop_na(bps)
+
+bio_merge=
+  inner_join(biom19, biom20, by= "person")
+
+bio_merge_2=
+  bio_merge %>% 
+  mutate(
+    bps_19= as.numeric(bps.x)) %>% 
+  filter(bps_19 >= 130)
+
+summary(bio_merge_2$bps_19)
+```
+
+```{r}
+rx19 = rx19 %>% drop_na(class)
+rx20 = rx20 %>% drop_na(class)
+
+rx_19_drug=
+  rx19 %>% 
+  group_by(person) %>%
+  mutate(
+  group_19 = case_when(
+    (any(class == "CALCIUM CHANNEL BLOCKERS"| class == "ANTIHYPERTENSIVES" | class == "BETA BLOCKERS")) ~ "Y", 
+  TRUE ~ "N")) %>% 
+  distinct(person, group_19)
+
+rx_19_drug %>% group_by(group_19) %>% count()
+
+
+rx_20_drug=
+  rx20 %>% 
+  group_by(person) %>%
+  mutate(
+  group_20 = case_when(
+    (any(class == "CALCIUM CHANNEL BLOCKERS"| class == "ANTIHYPERTENSIVES" | class == "BETA BLOCKERS")) ~ "Y", 
+  TRUE ~ "N")) %>% 
+  distinct(person, group_20)
+```
+
+```{r}
+rx_merge=
+  merge(rx_19_drug, rx_20_drug, by = "person")
+
+rx_grouping=
+  rx_grouping %>% 
+  mutate(rx_merge, group= case_when(group_19== "Y" & group_20== "Y" ~ 'Consistent',
+                                     group_19== "N" & group_20=="Y" ~ 'Started',
+                                     group_19=="N" & group_20=="N" ~ "Never",
+                                     group_19=="Y" & group_20=="N"~ "Stopped"))
+
+rx_group_counter=
+  rx_grouping %>% 
+  group_by(group) %>% 
+  count(group)
+```
+
+
+```{r}
+ht_drug_merge=
+  left_join(bio_merge_2, rx_grouping, by= 'person')
+```
 
