@@ -57,9 +57,11 @@ rx_ht_19=
   inner_join(ht,rx19, by = "person")
 rx_ht=
   full_join(rx_ht_19, rx20, by= "person")
+
 count=
-  rx_ht_19 %>% 
+  htdrugset %>% 
   count(person)
+
 count_ht=
   ht %>% 
   count(person)
@@ -111,11 +113,20 @@ rx_merge=
 rx_group_clean=
   rx_group_trial %>% 
   group_by(person) %>% 
-  filter(class.xclass.y %in% c("ANTIHYPERTENSIVES", "CALCIUM CHANNEL BLOCKERS", "BETA BLOCKERS", "CARDIOVASCULAR AGENTS - MISC.")) %>% 
+  filter(class.x %in% c("ANTIHYPERTENSIVES", "CALCIUM CHANNEL BLOCKERS", "BETA BLOCKERS", "CARDIOVASCULAR AGENTS - MISC.")| class.y %in% c("ANTIHYPERTENSIVES", "CALCIUM CHANNEL BLOCKERS", "BETA BLOCKERS", "CARDIOVASCULAR AGENTS - MISC.")) %>% 
   count(group)
 ```
 
-30 stayed consistent with drug use from 2019-2020
+```{r}
+rx_ht_19=
+  rx_ht %>% 
+ group_by(person) %>% 
+  mutate(group_19 = case_when(
+    (any(class.x == "CALCIUM CHANNEL BLOCKERS" | class.x == "CARDIOVASCULAR AGENTS - MISC." | class.x == "ANTIHYPERTENSIVES" | class.x == "BETA BLOCKERS")) ~ "Y", 
+  TRUE ~ "N")
+  )
+```
+
 
 
 *BPS Change Over Time*

@@ -76,6 +76,23 @@ biom_19_ht=
 
 ht_19=
   merge(biom_19_ht, rx19, by= "person")
+ht_19_count=
+  ht_19 %>% 
+  group_by(person) %>% 
+  count(person)
+
+biom_20_ht=
+  biom20 %>% 
+  mutate(
+    bps_num= as.numeric(bps)) %>% 
+  filter(bps_num >= 130)
+
+ht_20=
+  merge(biom_20_ht, rx20, by= "person")
+ht_20_count=
+  ht_20 %>% 
+  group_by(person) %>% 
+  count(person)
 ```
 
 Filter to drug classes
