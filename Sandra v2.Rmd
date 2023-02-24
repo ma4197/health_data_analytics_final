@@ -1,0 +1,244 @@
+---
+title: "Health Data Final Project"
+author: "R2"
+date: "2023-02-16"
+output: html_document
+---
+
+```{r}
+
+library(readxl)
+library(tidyverse)
+library(dplyr)
+library(tidyselect)
+library(lubridate)
+library(ggplot2)
+
+```
+
+Load Data Sets:
+```{r}
+med19= read_excel("Data/Medical 2019.xlsx") %>% 
+  janitor:: clean_names()
+med20= read_excel("Data/Medical 2020.xlsx") %>% 
+  janitor:: clean_names()
+rx20= read_excel("Data/Rx 2020.xlsx") %>% 
+  janitor:: clean_names()
+rx19= read_excel("Data/Rx 2019.xlsx") %>% 
+  janitor:: clean_names()
+risk20= read_excel("Data/Risk 2020.xlsx") %>% 
+  janitor:: clean_names()
+risk19=read_excel("Data/Risk 2019.xlsx") %>% 
+  janitor:: clean_names()
+biom19=read_excel("Data/Biometrics 2019.xlsx") %>% 
+  janitor:: clean_names()
+biom20=read_excel("Data/Biometricsx 2020.xlsx") %>% 
+  janitor:: clean_names()
+```
+
+```{r}
+#remove NA rows if data is missing bps values
+biom19 = biom19 %>% drop_na(bps)
+biom20 = biom20 %>% drop_na(bps)
+
+#createhypertensive group
+htdrug19 = left_join(biom19, rx19, by = "person")
+htdrug19 = htdrug19 %>% 
+  rename(bps19 = bps) %>% 
+  filter(bps19 >= 130) %>% 
+  select(person, from, units, cost, brand, class, drug, gender.x, age_range.x, glucose, bmi, bpd, bps19, hdl, ldl, chol)
+
+counter_19 = htdrug19 %>% 
+  group_by(person) %>% 
+  count(person)
+
+htdrug20 = left_join(biom20, rx20, by = "person")
+htdrug20 = htdrug20 %>% 
+  rename(bps20 = bps) %>% 
+  select(person, from, units, cost, brand, class, drug, gender.x, age_range.x, glucose, bmi, bpd, bps20, hdl, ldl, chol)
+
+htdrug = merge(htdrug19, htdrug20, by = 'person')
+```
+```{r}
+```{r}
+#remove NA rows if data is missing bps values
+biom19 = biom19 %>% drop_na(bps)
+biom19 = biom19 %>% rename(bps19 = bps)
+biom20 = biom20 %>% drop_na(bps)
+rx19 = rx19 %>% drop_na(class)
+rx20 = rx20 %>% drop_na(class)
+```
+
+```{r}
+druguse19 = rx19 %>% 
+  group_by(person) %>% 
+  mutate(htuse19 = case_when(
+    (any(class == "CALCIUM CHANNEL BLOCKERS" | class == "ANTIHYPERTENSIVES" | class == "BETA BLOCKERS"))  ~ "yes", 
+  TRUE ~ "no")) %>% 
+  distinct(person, htuse19) 
+
+druguse19 %>% group_by(htuse19) %>% count()
+  
+druguse20 = rx20 %>% 
+  group_by(person) %>% 
+  mutate(htuse20 = case_when(
+    (any(class == "CALCIUM CHANNEL BLOCKERS" | class == "ANTIHYPERTENSIVES" | class == "BETA BLOCKERS"))  ~ "yes", 
+  TRUE ~ "no")) %>%
+   distinct(person, htuse20)
+
+druguse20 %>% group_by(htuse20) %>% count()
+```
+
+
+```{r create new set}
+druguse = merge(druguse19, druguse20, "person")
+
+druguse = druguse %>% 
+  group_by(person) %>% 
+  mutate(htgroup = case_when(
+    htuse19 == "yes" & htuse20 == "yes" ~ "consistent",
+    htuse19 == "yes" & htuse20 == "no" ~ "stopped2019",
+    htuse19 == "no" & htuse20 == "yes" ~ "started2020",
+    TRUE ~ "never started"
+  )) %>% 
+  select(person, htgroup, htuse19, htuse20)
+
+checkdrug = druguse %>% 
+  distinct(person, htgroup) %>% 
+  group_by(htgroup) %>% 
+  count(htgroup)
+
+```
+
+```{r}
+#class of hypertensives 
+biom = inner_join(biom19, biom20, by = "person")
+biom = biom %>% drop_na(bps) %>% rename(bps20 = bps) 
+
+#hypertensive filter
+ht = biom %>% filter(bps19 >= 130)
+
+htdrug = merge(x = ht, y= druguse, by = "person", all.x=TRUE)
+
+htdrug = htdrug %>% 
+  mutate_at(vars(htgroup), ~replace_na(., "never started"))
+
+htdrug = htdrug %>%
+  distinct()
+
+trend = htdrug %>% 
+  distinct(person, htgroup) %>% 
+  group_by(htgroup) %>% 
+  count(htgroup)
+
+```
+
+```{r outcomes}
+#outcomes? did bp decrease and by how much 
+
+htdrug$bpsdiff = as.numeric(htdrug$bps20) - as.numeric(htdrug$bps19)
+
+bpscalculation = htdrug %>% 
+  distinct(bps20, bps19, bpsdiff, htgroup, person) %>%
+  group_by(htgroup) %>% 
+  mutate(averagediff = mean(bpsdiff))
+  
+bpsoutcome = bpscalculation %>% 
+  group_by(htgroup) %>% 
+  distinct(averagediff, htgroup)
+```
+
+```{r pharmaceutical cost}
+#how much more do hypertensives cost (general pharmaceuticals)
+rxcombined = rbind(rx19, rx20)
+htrxcost = merge(htdrug, rxcombined, by = "person")
+
+drugdiff = htrxcost %>% 
+  group_by(person) %>% 
+  mutate(total_cost = sum(cost)) 
+
+drugdiff1 = drugdiff %>% 
+  distinct(total_cost, htgroup, person) %>% 
+  group_by(htgroup) %>% 
+  mutate(groupavgcost = mean(total_cost)) %>% 
+  distinct(htgroup, groupavgcost)
+
+drugdiffht = htrxcost %>% 
+  filter(!str_detect(person, '311-01')) %>%
+  group_by(person) %>% 
+  filter(
+     class == "CALCIUM CHANNEL BLOCKERS" | class == "ANTIHYPERTENSIVES" | class == "BETA BLOCKERS"
+  ) 
+
+drugdiffht = drugdiffht %>% 
+  mutate(htcost = sum(cost)) %>% 
+  group_by(htgroup) %>% 
+  mutate(grouphtcost = mean(htcost)) %>% 
+  distinct(htgroup, grouphtcost)
+ 
+```
+
+```{r ER }
+#how many ER visits a person had in 2019, then 2020 
+#293 
+er19 = med19 %>% 
+  group_by(person) %>% 
+  mutate(iner19 = case_when(
+    (any(er==1))  ~ "yes", TRUE ~ "no" )) %>%
+  distinct(iner19, person) 
+
+er19 %>% 
+  group_by(iner) %>% 
+  count()
+
+er20 = med20 %>% 
+  group_by(person) %>% 
+  mutate(iner20 = case_when(
+    (any(er==1))  ~ "yes", TRUE ~ "no" )) %>%
+  distinct(iner20, person) #393 visits 
+
+ermed = merge(er19, er20 by = "person")
+#repeat hospitalization 
+
+htdrug19er = merge(x = htdrug, y= er19, by = "person", all.x=TRUE)
+htdrug19er %>% 
+  group_by(htgroup, iner19) %>% 
+  count()
+htdrug20er = merge(x = htdrug, y= er20, by = "person", all.x=TRUE)
+htdrug20er %>% 
+  group_by(htgroup, iner20) %>% 
+  count()
+#merge ER visits with druguse category 
+```
+
+```{r medical cost}
+medcombined = rbind(med19, med20)
+htmedcost = merge(htdrug, medcombined, by = "person")
+
+#generalcost of care 
+personmedcosts = htmedcost %>% 
+  group_by(person) %>% 
+  mutate(total_cost = sum(cost)) 
+
+drugmeddiff = personmedcosts %>% 
+  distinct(total_cost, htgroup, person) %>% 
+  group_by(htgroup) %>% 
+  mutate(groupavgcost = mean(total_cost)) %>% 
+  distinct(htgroup, groupavgcost)
+
+#cost of HT related care
+drugdiffht = htmedcost %>% 
+  filter(!str_detect(person, '311-01')) %>%
+  group_by(person) %>% 
+  filter(grepl("^N18|^I25|^I10|^I25|^I21", icd10) | grepl("^N18|^I25|^I10|^I25|^I21", icd2)) %>%
+  mutate(htcost = sum(cost))
+
+drugdiffht %>% 
+  group_by(htgroup) %>% 
+  mutate(htmedcost = mean(htcost)) %>% 
+  distinct(htgroup, htmedcost)
+
+```
+
+
+
